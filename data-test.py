@@ -1,6 +1,7 @@
 # Import libraries
 import pandas as pd
 import numpy as np
+from ipums_lib import row_generator, columm_generator
 
 pd.set_option('display.max_columns', None)
 
@@ -13,6 +14,10 @@ temperature_excel_filename = r"Source_Data_Files/average-city-temperatures-fsr.x
 
 # USA Real Estate Dataset: https://www.kaggle.com/datasets/ahmedshahriarsakib/usa-real-estate-dataset/data
 realtor_data = r"Source_Data_Files/realtor-data.csv"
+
+# Current Population Survey (CPS) Data
+cps_data = r"Source_Data_Files/cps_00001.dat"
+cps_ddi = r"Source_Data_Files/cps_00001.xml"
 
 # ------------------------------------------------------------------------------------------------------------------- #
 #                                       Data Preparation - Average Temperatures                                       #
@@ -45,12 +50,27 @@ def prep_temperature_data(temperature_source_file):
 
     avg_us_temp_df.to_csv("avg_us_temp_celsius.csv", index=False)
 
-
 # ------------------------------------------------------------------------------------------------------------------- #
 #                                            Data Preparation - Real Estate                                           #
 # ------------------------------------------------------------------------------------------------------------------- #
-realtor_df = pd.read_csv(realtor_data)
-# prev_sold_date has mixed types
+#realtor_df = pd.read_csv(realtor_data)
+# NEED TO FIX: prev_sold_date has mixed types
+
+# ------------------------------------------------------------------------------------------------------------------- #
+#                                        Data Preparation - Current Population                                        #
+# ------------------------------------------------------------------------------------------------------------------- #
+# Get column names and initialize dataframe
+columns = columm_generator(datapath = cps_data, ddipath = cps_ddi)
+columns = [column for column in columns]
+cps_df = pd.DataFrame(columns=columns)
+
+# Get rows from row generator and append to dataframe
+rows = row_generator(datapath = cps_data, ddipath = cps_ddi)
+for row in rows:
+    cps_df.loc[len(cps_df)] = row
+
+print(cps_df)
+cps_df.to_csv("CSV_Outputs/cps_data.csv", index=False)
 
 # ------------------------------------------------------------------------------------------------------------------- #
 #                                                         Main                                                        #
@@ -62,7 +82,7 @@ realtor_df = pd.read_csv(realtor_data)
 #merged_df.to_csv("CSV_Outputs/temp_realtor_data.csv", index=False)
 #print(merged_df)
 
-merged_df = pd.read_csv("temp_realtor_data.csv")
+#merged_df = pd.read_csv("temp_realtor_data.csv")
 
 # Result: -0.010921317058140189
 #corr = merged_df['price'].corr(merged_df['average_temp_celsius'])
