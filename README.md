@@ -1,6 +1,8 @@
 ## Details
 
 **ACS1 Variables used in model:**  
+Source: https://api.census.gov/data/2024/acs/acs1/variables.html  
+
 B01001 - Sex by Age  
 B07011 - Median Income by Geographical Mobility in the Past Year  
 B08134 - Means of Transportation to Work by Travel Time to Work  
