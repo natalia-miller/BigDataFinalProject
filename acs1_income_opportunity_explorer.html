@@ -1,0 +1,375 @@
+
+<style>
+  .section { margin-bottom: 1.5rem; }
+  .section-label { font-size: 12px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; font-weight: 500; }
+  .pill-group { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill { padding: 5px 12px; border-radius: 20px; font-size: 13px; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s; }
+  .pill:hover { background: var(--color-background-secondary); }
+  .pill.active { background: #042C53; color: #B5D4F4; border-color: #185FA5; }
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 1.5rem 0; }
+  .metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px; }
+  .metric-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .metric-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+  .metric-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+  .rank-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .rank-table th { text-align: left; padding: 6px 8px; color: var(--color-text-secondary); font-weight: 500; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .rank-table td { padding: 8px 8px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); }
+  .rank-table tr:last-child td { border-bottom: none; }
+  .rank-table tr:hover td { background: var(--color-background-secondary); }
+  .score-bar { display: flex; align-items: center; gap: 8px; }
+  .bar-track { flex: 1; height: 4px; background: var(--color-background-secondary); border-radius: 2px; min-width: 60px; }
+  .bar-fill { height: 100%; border-radius: 2px; background: #185FA5; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+  .badge-up { background: #EAF3DE; color: #3B6D11; }
+  .badge-down { background: #FCEBEB; color: #A32D2D; }
+  .weight-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .weight-row label { font-size: 12px; color: var(--color-text-secondary); min-width: 160px; }
+  .weight-row input { flex: 1; }
+  .weight-row span { font-size: 12px; font-weight: 500; min-width: 34px; text-align: right; }
+  .divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 1.25rem 0; }
+  .code-block { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px; font-family: var(--font-mono); font-size: 12px; color: var(--color-text-primary); white-space: pre; overflow-x: auto; line-height: 1.6; margin-top: 1rem; }
+  .tab-row { display: flex; gap: 0; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 1.25rem; }
+  .tab { padding: 8px 16px; font-size: 13px; cursor: pointer; color: var(--color-text-secondary); border-bottom: 2px solid transparent; margin-bottom: -0.5px; }
+  .tab.active { color: var(--color-text-primary); border-bottom-color: #185FA5; font-weight: 500; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .copy-btn { font-size: 11px; padding: 3px 10px; float: right; cursor: pointer; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); color: var(--color-text-secondary); }
+  .copy-btn:hover { background: var(--color-background-primary); }
+</style>
+
+<div style="padding: 1rem 0;">
+
+  <div class="tab-row">
+    <div class="tab active" onclick="switchTab('profile')">Profile builder</div>
+    <div class="tab" onclick="switchTab('weights')">Scoring weights</div>
+    <div class="tab" onclick="switchTab('code')">Generated code</div>
+  </div>
+
+  <div id="tab-profile" class="panel active">
+
+    <div class="section">
+      <div class="section-label">Sex</div>
+      <div class="pill-group" id="sex-group">
+        <div class="pill active" data-val="female" onclick="select(this,'sex-group')">Female</div>
+        <div class="pill" data-val="male" onclick="select(this,'sex-group')">Male</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Race / Ethnicity</div>
+      <div class="pill-group" id="race-group">
+        <div class="pill active" data-val="hispanic" onclick="select(this,'race-group')">Hispanic / Latino</div>
+        <div class="pill" data-val="black" onclick="select(this,'race-group')">Black / African American</div>
+        <div class="pill" data-val="white_non_hispanic" onclick="select(this,'race-group')">White (non-Hispanic)</div>
+        <div class="pill" data-val="asian" onclick="select(this,'race-group')">Asian</div>
+        <div class="pill" data-val="american_indian" onclick="select(this,'race-group')">American Indian / AK Native</div>
+        <div class="pill" data-val="native_hawaiian" onclick="select(this,'race-group')">Native Hawaiian / Pacific Islander</div>
+        <div class="pill" data-val="other" onclick="select(this,'race-group')">Other race</div>
+        <div class="pill" data-val="two_or_more" onclick="select(this,'race-group')">Two or more races</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Work experience</div>
+      <div class="pill-group" id="work-group">
+        <div class="pill active" data-val="fulltime" onclick="select(this,'work-group')">Full-time, year-round</div>
+        <div class="pill" data-val="other" onclick="select(this,'work-group')">Part-time / part-year</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Number of results</div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <input type="range" min="5" max="50" value="20" step="5" id="topn-slider" oninput="document.getElementById('topn-out').textContent=this.value; updatePreview()" style="flex:1; max-width: 200px;">
+        <span id="topn-out" style="font-size: 14px; font-weight: 500;">20</span> <span style="font-size: 13px; color: var(--color-text-secondary);">top geographies</span>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="metric-grid" id="metrics">
+      <div class="metric"><div class="metric-label">Primary variable</div><div class="metric-value" id="m-var" style="font-size: 15px; margin-top: 4px;">B19326_005E</div><div class="metric-sub">Female, full-time median income</div></div>
+      <div class="metric"><div class="metric-label">Race income table</div><div class="metric-value" id="m-race" style="font-size: 15px; margin-top: 4px;">B19013I</div><div class="metric-sub">Hispanic / Latino HH median</div></div>
+      <div class="metric"><div class="metric-label">Mover premium</div><div class="metric-value" id="m-mover" style="font-size: 15px; margin-top: 4px;">B07011_004E</div><div class="metric-sub">Moved from different state</div></div>
+      <div class="metric"><div class="metric-label">Cost normalizer</div><div class="metric-value" style="font-size: 15px; margin-top: 4px;">B17002_012E</div><div class="metric-sub">≥200% poverty line share</div></div>
+    </div>
+
+    <div style="margin-top: 1.5rem;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 10px;">
+        <div style="font-size: 12px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Illustrative top geographies</div>
+        <div style="font-size: 11px; color: var(--color-text-tertiary);">simulated — run the script for real ACS1 data</div>
+      </div>
+      <table class="rank-table" id="rank-table"></table>
+    </div>
+
+    <div style="margin-top: 1.25rem;">
+      <button class="pill" style="border-radius: 20px; padding: 6px 16px;" onclick="sendPrompt('Run the full income opportunity analysis for a ' + getProfile().sex + ' ' + getProfile().race.replace(/_/g,' ') + ' worker (' + getProfile().work + ') using ACS1 — what are the next steps to run this locally?')">Ask Claude about next steps ↗</button>
+    </div>
+  </div>
+
+  <div id="tab-weights" class="panel">
+    <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 1.25rem; line-height: 1.6;">Adjust how much each data signal contributes to the opportunity score. Weights are re-normalized automatically so they always sum to 100%.</div>
+
+    <div id="weight-controls"></div>
+
+    <hr class="divider">
+    <div style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500;">Effective weights</div>
+    <div id="weight-display" style="display: flex; gap: 12px; flex-wrap: wrap;"></div>
+  </div>
+
+  <div id="tab-code" class="panel">
+    <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 1rem; line-height: 1.6;">Generated Python snippet based on your current profile. Paste into <code style="font-size: 12px; background: var(--color-background-secondary); padding: 1px 5px; border-radius: 3px;">income_opportunity_analysis.py</code>.</div>
+    <div style="position: relative;">
+      <button class="copy-btn" id="copy-btn" onclick="copyCode()">Copy</button>
+      <div class="code-block" id="code-out"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const RACE_MAP = {
+  hispanic:           { label: 'Hispanic / Latino',               group: 'B19013I' },
+  black:              { label: 'Black / African American',         group: 'B19013B' },
+  white_non_hispanic: { label: 'White (non-Hispanic)',             group: 'B19013H' },
+  asian:              { label: 'Asian',                            group: 'B19013D' },
+  american_indian:    { label: 'American Indian / AK Native',      group: 'B19013C' },
+  native_hawaiian:    { label: 'Native Hawaiian / PI',             group: 'B19013E' },
+  other:              { label: 'Other race',                       group: 'B19013F' },
+  two_or_more:        { label: 'Two or more races',                group: 'B19013G' },
+};
+
+const VAR_MAP = {
+  female_fulltime: { col: 'B19326_005E', desc: 'Female, full-time median income' },
+  female_other:    { col: 'B19326_006E', desc: 'Female, part-time/part-year median income' },
+  male_fulltime:   { col: 'B19326_002E', desc: 'Male, full-time median income' },
+  male_other:      { col: 'B19326_003E', desc: 'Male, part-time/part-year median income' },
+};
+
+const SAMPLE_DATA = {
+  hispanic: {
+    female_fulltime: [
+      { name: 'San Jose-Sunnyvale, CA', inc: 82400, race: 68200, mover: 14200, pros: 71.2 },
+      { name: 'San Francisco-Oakland, CA', inc: 79800, race: 65100, mover: 12900, pros: 68.4 },
+      { name: 'Seattle-Tacoma, WA', inc: 74200, race: 61800, mover: 10400, pros: 65.1 },
+      { name: 'Boston-Cambridge, MA', inc: 71900, race: 58400, mover: 9800, pros: 63.7 },
+      { name: 'Washington-Arlington, DC', inc: 70300, race: 59200, mover: 11200, pros: 64.2 },
+      { name: 'New York-Newark, NY', inc: 67800, race: 54600, mover: 8400, pros: 60.8 },
+      { name: 'Los Angeles, CA', inc: 64200, race: 51800, mover: 7200, pros: 57.3 },
+      { name: 'Dallas-Fort Worth, TX', inc: 62400, race: 50200, mover: 8900, pros: 58.1 },
+      { name: 'Denver-Aurora, CO', inc: 61800, race: 49600, mover: 9200, pros: 57.8 },
+      { name: 'Houston, TX', inc: 59900, race: 48400, mover: 7100, pros: 55.2 },
+    ],
+    female_other: [
+      { name: 'San Jose-Sunnyvale, CA', inc: 48200, race: 68200, mover: 9200, pros: 71.2 },
+      { name: 'San Francisco-Oakland, CA', inc: 45800, race: 65100, mover: 8400, pros: 68.4 },
+      { name: 'Washington-Arlington, DC', inc: 42100, race: 59200, mover: 7800, pros: 64.2 },
+      { name: 'Boston-Cambridge, MA', inc: 41600, race: 58400, mover: 6900, pros: 63.7 },
+      { name: 'Seattle-Tacoma, WA', inc: 40800, race: 61800, mover: 7100, pros: 65.1 },
+      { name: 'New York-Newark, NY', inc: 38400, race: 54600, mover: 5800, pros: 60.8 },
+      { name: 'Denver-Aurora, CO', inc: 36900, race: 49600, mover: 6400, pros: 57.8 },
+      { name: 'Austin-Round Rock, TX', inc: 35800, race: 47800, mover: 7200, pros: 56.4 },
+      { name: 'Los Angeles, CA', inc: 34600, race: 51800, mover: 4900, pros: 57.3 },
+      { name: 'Dallas-Fort Worth, TX', inc: 33800, race: 50200, mover: 5900, pros: 58.1 },
+    ],
+  },
+  black: {
+    female_fulltime: [
+      { name: 'San Jose-Sunnyvale, CA', inc: 79200, race: 72100, mover: 13800, pros: 70.1 },
+      { name: 'Washington-Arlington, DC', inc: 76400, race: 71200, mover: 12400, pros: 68.9 },
+      { name: 'San Francisco-Oakland, CA', inc: 74100, race: 68900, mover: 11200, pros: 67.2 },
+      { name: 'Boston-Cambridge, MA', inc: 70200, race: 62400, mover: 9800, pros: 64.1 },
+      { name: 'Seattle-Tacoma, WA', inc: 68900, race: 60100, mover: 10200, pros: 63.4 },
+      { name: 'Atlanta, GA', inc: 64800, race: 58400, mover: 9400, pros: 60.2 },
+      { name: 'New York-Newark, NY', inc: 62100, race: 54200, mover: 7800, pros: 58.6 },
+      { name: 'Charlotte, NC', inc: 59400, race: 51800, mover: 8600, pros: 57.1 },
+      { name: 'Dallas-Fort Worth, TX', inc: 58200, race: 50400, mover: 8200, pros: 56.8 },
+      { name: 'Houston, TX', inc: 56800, race: 49100, mover: 7400, pros: 54.9 },
+    ],
+    female_other: [
+      { name: 'Washington-Arlington, DC', inc: 44200, race: 71200, mover: 8200, pros: 68.9 },
+      { name: 'San Jose-Sunnyvale, CA', inc: 43800, race: 72100, mover: 9100, pros: 70.1 },
+      { name: 'San Francisco-Oakland, CA', inc: 41600, race: 68900, mover: 7400, pros: 67.2 },
+      { name: 'Boston-Cambridge, MA', inc: 39800, race: 62400, mover: 6800, pros: 64.1 },
+      { name: 'Seattle-Tacoma, WA', inc: 38400, race: 60100, mover: 7100, pros: 63.4 },
+      { name: 'Atlanta, GA', inc: 36200, race: 58400, mover: 6400, pros: 60.2 },
+      { name: 'New York-Newark, NY', inc: 34800, race: 54200, mover: 5200, pros: 58.6 },
+      { name: 'Charlotte, NC', inc: 33400, race: 51800, mover: 5800, pros: 57.1 },
+      { name: 'Houston, TX', inc: 32100, race: 49100, mover: 4900, pros: 54.9 },
+      { name: 'Dallas-Fort Worth, TX', inc: 31800, race: 50400, mover: 5400, pros: 56.8 },
+    ],
+  },
+  white_non_hispanic: {
+    female_fulltime: [
+      { name: 'San Jose-Sunnyvale, CA', inc: 94800, race: 112400, mover: 18400, pros: 78.4 },
+      { name: 'San Francisco-Oakland, CA', inc: 91200, race: 108900, mover: 16800, pros: 76.2 },
+      { name: 'Seattle-Tacoma, WA', inc: 86400, race: 98200, mover: 14200, pros: 72.8 },
+      { name: 'Boston-Cambridge, MA', inc: 84100, race: 96400, mover: 13800, pros: 71.4 },
+      { name: 'Washington-Arlington, DC', inc: 82900, race: 102400, mover: 15600, pros: 73.2 },
+      { name: 'Denver-Aurora, CO', inc: 76400, race: 88200, mover: 12400, pros: 68.1 },
+      { name: 'Minneapolis-St. Paul, MN', inc: 74200, race: 86400, mover: 11200, pros: 66.9 },
+      { name: 'New York-Newark, NY', inc: 72800, race: 94200, mover: 10800, pros: 65.4 },
+      { name: 'Austin-Round Rock, TX', inc: 70400, race: 84100, mover: 13800, pros: 67.2 },
+      { name: 'Portland, OR', inc: 68200, race: 78400, mover: 10400, pros: 64.8 },
+    ],
+    female_other: [
+      { name: 'San Jose-Sunnyvale, CA', inc: 58200, race: 112400, mover: 12100, pros: 78.4 },
+      { name: 'San Francisco-Oakland, CA', inc: 54800, race: 108900, mover: 11200, pros: 76.2 },
+      { name: 'Washington-Arlington, DC', inc: 51200, race: 102400, mover: 10400, pros: 73.2 },
+      { name: 'Boston-Cambridge, MA', inc: 49800, race: 96400, mover: 9200, pros: 71.4 },
+      { name: 'Seattle-Tacoma, WA', inc: 48400, race: 98200, mover: 9800, pros: 72.8 },
+      { name: 'Denver-Aurora, CO', inc: 44200, race: 88200, mover: 8400, pros: 68.1 },
+      { name: 'Austin-Round Rock, TX', inc: 42800, race: 84100, mover: 9600, pros: 67.2 },
+      { name: 'Minneapolis-St. Paul, MN', inc: 41600, race: 86400, mover: 7800, pros: 66.9 },
+      { name: 'New York-Newark, NY', inc: 40200, race: 94200, mover: 7200, pros: 65.4 },
+      { name: 'Portland, OR', inc: 38800, race: 78400, mover: 7100, pros: 64.8 },
+    ],
+  },
+};
+
+function getFallback(race, workKey) {
+  const r = SAMPLE_DATA[race] || SAMPLE_DATA.hispanic;
+  return r[workKey] || r['female_fulltime'] || SAMPLE_DATA.hispanic.female_fulltime;
+}
+
+const weights = { target_income: 50, race_income: 25, mover_premium: 15, prosperity: 10 };
+
+function getProfile() {
+  const sex = document.querySelector('#sex-group .active')?.dataset.val || 'female';
+  const race = document.querySelector('#race-group .active')?.dataset.val || 'hispanic';
+  const work = document.querySelector('#work-group .active')?.dataset.val || 'fulltime';
+  return { sex, race, work };
+}
+
+function select(el, groupId) {
+  document.querySelectorAll('#' + groupId + ' .pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  updatePreview();
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'code') updateCode();
+  if (name === 'weights') renderWeights();
+}
+
+function scoreRows(rows, w) {
+  const norm = (arr, key) => {
+    const vals = arr.map(r => r[key]);
+    const mn = Math.min(...vals), mx = Math.max(...vals);
+    return arr.map(r => mx === mn ? 50 : (r[key] - mn) / (mx - mn) * 100);
+  };
+  const ni = norm(rows, 'inc'), nr = norm(rows, 'race'), nm = norm(rows, 'mover'), np = norm(rows, 'pros');
+  const tw = w.target_income + w.race_income + w.mover_premium + w.prosperity;
+  return rows.map((r, i) => ({
+    ...r,
+    score: Math.round((w.target_income * ni[i] + w.race_income * nr[i] + w.mover_premium * nm[i] + w.prosperity * np[i]) / tw),
+  })).sort((a, b) => b.score - a.score);
+}
+
+function updatePreview() {
+  const { sex, race, work } = getProfile();
+  const workKey = sex + '_' + work;
+  const varInfo = VAR_MAP[workKey] || VAR_MAP['female_fulltime'];
+  const raceInfo = RACE_MAP[race] || RACE_MAP['hispanic'];
+
+  document.getElementById('m-var').textContent = varInfo.col;
+  document.getElementById('m-var').nextElementSibling.textContent = varInfo.desc;
+  document.getElementById('m-race').textContent = raceInfo.group;
+  document.getElementById('m-race').nextElementSibling.textContent = raceInfo.label + ' HH median';
+
+  const rows = getFallback(race, workKey);
+  const topN = parseInt(document.getElementById('topn-slider').value);
+  const scored = scoreRows(rows, weights).slice(0, Math.min(topN, rows.length));
+  const maxScore = Math.max(...scored.map(r => r.score));
+
+  const tbl = document.getElementById('rank-table');
+  tbl.innerHTML = '<thead><tr><th>#</th><th>Geography</th><th>Est. income</th><th>Mover premium</th><th>Score</th></tr></thead>';
+  const tbody = document.createElement('tbody');
+  scored.forEach((r, i) => {
+    const prevScore = i > 0 ? scored[i-1].score : r.score;
+    const badge = i === 0 ? '' : r.score >= prevScore - 2 ? '' : '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color: var(--color-text-tertiary); font-size: 12px;">${i+1}</td>
+      <td style="font-weight: ${i === 0 ? '500' : '400'};">${r.name}</td>
+      <td>$${r.inc.toLocaleString()}</td>
+      <td><span class="badge badge-up">+$${r.mover.toLocaleString()}</span></td>
+      <td><div class="score-bar"><div class="bar-track"><div class="bar-fill" style="width:${Math.round(r.score/maxScore*100)}%"></div></div><span style="font-size:12px;min-width:26px;">${r.score}</span></div></td>`;
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);
+}
+
+function renderWeights() {
+  const labels = {
+    target_income: 'Your income (B19326)',
+    race_income:   'Race-adj HH income (B19013)',
+    mover_premium: 'Mover premium (B07011)',
+    prosperity:    '% above 2× poverty (B17002)',
+  };
+  const ctrl = document.getElementById('weight-controls');
+  ctrl.innerHTML = '';
+  Object.keys(weights).forEach(k => {
+    const row = document.createElement('div');
+    row.className = 'weight-row';
+    row.innerHTML = `<label>${labels[k]}</label><input type="range" min="0" max="100" step="5" value="${weights[k]}" oninput="weights['${k}']=+this.value; updateWeightDisplay(); updatePreview();"><span>${weights[k]}%</span>`;
+    row.querySelector('input').oninput = function() {
+      weights[k] = +this.value;
+      this.nextElementSibling.textContent = this.value + '%';
+      updateWeightDisplay();
+      updatePreview();
+    };
+    ctrl.appendChild(row);
+  });
+  updateWeightDisplay();
+}
+
+function updateWeightDisplay() {
+  const total = Object.values(weights).reduce((a,b)=>a+b,0) || 1;
+  const disp = document.getElementById('weight-display');
+  if (!disp) return;
+  const colors = ['#185FA5','#3B6D11','#BA7517','#A32D2D'];
+  const keys = Object.keys(weights);
+  disp.innerHTML = keys.map((k,i) => {
+    const pct = Math.round(weights[k] / total * 100);
+    return `<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-text-secondary);"><span style="width:8px;height:8px;border-radius:2px;background:${colors[i]};display:inline-block;"></span>${k.replace(/_/g,' ')}: <strong>${pct}%</strong></div>`;
+  }).join('');
+}
+
+function updateCode() {
+  const { sex, race, work } = getProfile();
+  const topN = document.getElementById('topn-slider').value;
+  const tw = Object.values(weights).reduce((a,b)=>a+b,0)||1;
+  const wObj = Object.entries(weights).map(([k,v])=>`        "${k.replace('_income','').replace('mover_','mover_').replace('prosperity','prosperity_pct')}": ${(v/tw).toFixed(2)}`).join(',\n');
+  const code = `PROFILE = {
+    "sex":             "${sex}",
+    "race":            "${race}",
+    "work_experience": "${work === 'fulltime' ? 'fulltime' : 'other'}",
+    "top_n":           ${topN},
+    "vintage":         2023,
+    "custom_weights": {
+${wObj}
+    },
+}
+
+results = analyze_income_opportunity(**PROFILE)`;
+  document.getElementById('code-out').textContent = code;
+}
+
+function copyCode() {
+  const txt = document.getElementById('code-out').textContent;
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+
+updatePreview();
+renderWeights();
+updateCode();
+</script>
