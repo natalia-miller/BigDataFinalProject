@@ -1,0 +1,269 @@
+
+<style>
+  .step-btn { padding: 5px 14px; font-size: 13px; border-radius: 20px; cursor: pointer; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-secondary); transition: all .15s; }
+  .step-btn.active { background: #042C53; color: #B5D4F4; border-color: #185FA5; }
+  .step-btn:hover:not(.active) { background: var(--color-background-secondary); }
+  .panel { display: none; animation: fadein .2s ease; }
+  .panel.active { display: block; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .metric-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 12px 0; }
+  .mc { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+  .mc-l { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 3px; }
+  .mc-v { font-size: 19px; font-weight: 500; color: var(--color-text-primary); }
+  .mc-s { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+  .feat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin: 12px 0; }
+  .feat-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+  .feat-name { font-size: 12px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 3px; }
+  .feat-src { font-size: 11px; color: var(--color-text-tertiary); }
+  .feat-bar-wrap { height: 4px; background: var(--color-background-secondary); border-radius: 2px; margin-top: 6px; }
+  .feat-bar { height: 100%; border-radius: 2px; }
+  .expert-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0; }
+  .expert-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 12px 14px; }
+  .expert-badge { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 8px; }
+  .expert-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 6px; }
+  .expert-detail { font-size: 11px; color: var(--color-text-secondary); line-height: 1.5; }
+  .expert-metrics { margin-top: 8px; padding-top: 8px; border-top: 0.5px solid var(--color-border-tertiary); }
+  .em-row { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; }
+  .em-label { color: var(--color-text-secondary); }
+  .em-val { font-weight: 500; color: var(--color-text-primary); }
+  .viz-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 12px 0; }
+  .viz-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px; cursor: pointer; border: 0.5px solid transparent; transition: border-color .15s; }
+  .viz-card:hover { border-color: var(--color-border-secondary); }
+  .viz-icon { width: 100%; height: 64px; border-radius: 6px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; }
+  .viz-title { font-size: 12px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; }
+  .viz-sub { font-size: 11px; color: var(--color-text-tertiary); }
+  .tier-legend { display: flex; gap: 12px; flex-wrap: wrap; margin: 10px 0; }
+  .tier-dot { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--color-text-secondary); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .pca-row { display: flex; gap: 8px; margin: 10px 0; font-size: 12px; align-items: center; flex-wrap: wrap; }
+  .pc-pill { background: var(--color-background-secondary); border-radius: 12px; padding: 4px 10px; color: var(--color-text-secondary); font-size: 11px; }
+  .pc-pill strong { color: var(--color-text-primary); }
+  .weight-bar { height: 6px; border-radius: 3px; margin-top: 4px; }
+</style>
+
+<div style="padding: 1rem 0;">
+
+  <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.25rem;">
+    <button class="step-btn active" onclick="show(0,this)">1. Data</button>
+    <button class="step-btn" onclick="show(1,this)">2. Features</button>
+    <button class="step-btn" onclick="show(2,this)">3. PCA</button>
+    <button class="step-btn" onclick="show(3,this)">4. Three experts</button>
+    <button class="step-btn" onclick="show(4,this)">5. Metrics</button>
+    <button class="step-btn" onclick="show(5,this)">6. Visualizations</button>
+    <button class="step-btn" onclick="show(6,this)">7. Ensemble</button>
+  </div>
+
+  <div id="p0" class="panel active">
+    <div style="font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; margin-bottom: 12px;">Seven ACS1 groups pulled via censusdis for all counties with 65,000+ population.</div>
+    <div class="feat-grid">
+      <div class="feat-card"><div class="feat-name">B25070</div><div class="feat-src">Gross rent as % of income</div><div class="feat-bar-wrap"><div class="feat-bar" style="width:90%;background:#185FA5;"></div></div></div>
+      <div class="feat-card"><div class="feat-name">B25091</div><div class="feat-src">Mortgage costs as % of income</div><div class="feat-bar-wrap"><div class="feat-bar" style="width:85%;background:#185FA5;"></div></div></div>
+      <div class="feat-card"><div class="feat-name">B19013</div><div class="feat-src">Median household income</div><div class="feat-bar-wrap"><div class="feat-bar" style="width:80%;background:#1D9E75;"></div></div></div>
+      <div class="feat-card"><div class="feat-name">B25064</div><div class="feat-src">Median gross rent</div><div class="feat-bar-wrap"><div class="feat-bar" style="width:75%;background:#185FA5;"></div></div></div>
+      <div class="feat-card"><div class="feat-name">B25077</div><div class="feat-src">Median home value</div><div class="feat-bar-wrap"><div class="feat-bar" style="width:72%;background:#185FA5;"></div></div></div>
+      <div class="feat-card"><div class="feat-name">B17002</div><div class="feat-src">Income-to-poverty ratio</div><div class="feat-bar-wrap"><div class="feat-bar" style="width:65%;background:#1D9E75;"></div></div></div>
+      <div class="feat-card"><div class="feat-name">B23025</div><div class="feat-src">Employment status</div><div class="feat-bar-wrap"><div class="feat-bar" style="width:55%;background:#BA7517;"></div></div></div>
+    </div>
+    <div style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px;">Bar length = relative signal strength for affordability prediction</div>
+    <button style="margin-top: 12px;" class="step-btn" onclick="sendPrompt('What ACS1 variables are most predictive of housing affordability and why?')">Why these variables? ↗</button>
+  </div>
+
+  <div id="p1" class="panel">
+    <div style="font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; margin-bottom: 12px;">9 engineered features derived from raw ACS counts. All rates are 0–100 (percentage points).</div>
+    <div class="feat-grid">
+      <div class="feat-card"><div class="feat-name">rent_burden_pct</div><div class="feat-src">% renters paying ≥30% income on rent</div><div style="margin-top:4px;font-size:11px;color:#A32D2D;">↑ worse affordability</div></div>
+      <div class="feat-card"><div class="feat-name">mortgage_burden_pct</div><div class="feat-src">% owners paying ≥30% income on mortgage</div><div style="margin-top:4px;font-size:11px;color:#A32D2D;">↑ worse affordability</div></div>
+      <div class="feat-card"><div class="feat-name">home_value_to_income</div><div class="feat-src">Median home value ÷ annual HH income</div><div style="margin-top:4px;font-size:11px;color:#A32D2D;">↑ worse affordability</div></div>
+      <div class="feat-card"><div class="feat-name">rent_to_income</div><div class="feat-src">(Median rent × 12) ÷ annual HH income</div><div style="margin-top:4px;font-size:11px;color:#A32D2D;">↑ worse affordability</div></div>
+      <div class="feat-card"><div class="feat-name">pct_above_2x_poverty</div><div class="feat-src">% population at 200%+ poverty line</div><div style="margin-top:4px;font-size:11px;color:#3B6D11;">↑ better affordability</div></div>
+      <div class="feat-card"><div class="feat-name">unemployment_rate</div><div class="feat-src">Unemployed ÷ labor force</div><div style="margin-top:4px;font-size:11px;color:#A32D2D;">↑ worse affordability</div></div>
+      <div class="feat-card"><div class="feat-name">median_hh_income</div><div class="feat-src">Absolute HH income in dollars</div><div style="margin-top:4px;font-size:11px;color:#3B6D11;">↑ better affordability</div></div>
+      <div class="feat-card"><div class="feat-name">median_gross_rent</div><div class="feat-src">Monthly rent in dollars</div><div style="margin-top:4px;font-size:11px;color:#A32D2D;">↑ worse affordability</div></div>
+      <div class="feat-card"><div class="feat-name">median_home_value</div><div class="feat-src">Home value in dollars</div><div style="margin-top:4px;font-size:11px;color:#A32D2D;">↑ worse affordability</div></div>
+    </div>
+    <div style="margin-top: 10px; padding: 10px 12px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); font-size: 12px; color: var(--color-text-secondary); line-height: 1.6;">
+      Composite index = weighted sum of sign-adjusted StandardScaler outputs. Burden vars inverted (×−1). Weights: rent burden 20%, home value/income 20%, mortgage burden 15%, rent/income 15%, poverty ratio 10%, unemployment 10%, income 5%, rent 2.5%, home value 2.5%.
+    </div>
+  </div>
+
+  <div id="p2" class="panel">
+    <div style="font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; margin-bottom: 12px;">PCA reduces the 9-feature space for visualization and collinearity diagnosis. Models train on the original 9 scaled features for maximum interpretability.</div>
+    <div class="pca-row">
+      <div class="pc-pill"><strong>PC1</strong> ~38% var</div>
+      <div class="pc-pill"><strong>PC2</strong> ~22% var</div>
+      <div class="pc-pill"><strong>PC3</strong> ~14% var</div>
+      <div class="pc-pill"><strong>PC4</strong> ~10% var</div>
+      <div class="pc-pill"><strong>PC5</strong> ~7% var</div>
+      <div style="font-size:12px;color:var(--color-text-tertiary);">≈91% total</div>
+    </div>
+    <div class="feat-grid" style="margin-top: 10px;">
+      <div class="feat-card">
+        <div class="feat-name" style="font-size:11px;">PC1 — "burden axis"</div>
+        <div class="feat-src" style="margin-top:4px;">rent_burden_pct (+), mortgage_burden_pct (+), rent_to_income (+)</div>
+        <div class="weight-bar" style="width:90%;background:#E24B4A;"></div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-name" style="font-size:11px;">PC2 — "price level axis"</div>
+        <div class="feat-src" style="margin-top:4px;">median_home_value (+), median_gross_rent (+), home_value_to_income (+)</div>
+        <div class="weight-bar" style="width:72%;background:#185FA5;"></div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-name" style="font-size:11px;">PC3 — "income axis"</div>
+        <div class="feat-src" style="margin-top:4px;">median_hh_income (+), pct_above_2x_poverty (+)</div>
+        <div class="weight-bar" style="width:54%;background:#1D9E75;"></div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-name" style="font-size:11px;">Biplot output</div>
+        <div class="feat-src" style="margin-top:4px;">PC1 vs PC2 scatter colored by affordability index + loading arrows</div>
+        <div class="weight-bar" style="width:40%;background:#BA7517;"></div>
+      </div>
+    </div>
+    <button class="step-btn" style="margin-top:10px;" onclick="sendPrompt('Explain what the PCA biplot tells us about metro affordability clustering')">Explain the PCA biplot ↗</button>
+  </div>
+
+  <div id="p3" class="panel">
+    <div style="font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; margin-bottom: 12px;">Three expert regressors trained on 9 StandardScaler features with 5-fold cross-validation.</div>
+    <div class="expert-grid">
+      <div class="expert-card">
+        <div class="expert-badge" style="background:#E6F1FB;color:#0C447C;">Expert 1</div>
+        <div class="expert-name">Ridge Regression</div>
+        <div class="expert-detail">Linear model with L2 regularization (α=1.0). Fast, interpretable coefficients. Assumes linear relationship between features and index.</div>
+        <div class="expert-metrics">
+          <div class="em-row"><span class="em-label">Strength</span><span class="em-val">Coefficients = direct weights</span></div>
+          <div class="em-row"><span class="em-label">Weakness</span><span class="em-val">Misses non-linear interactions</span></div>
+          <div class="em-row"><span class="em-label">Hyperparams</span><span class="em-val">alpha=1.0</span></div>
+        </div>
+      </div>
+      <div class="expert-card" style="border-color: var(--color-border-secondary);">
+        <div class="expert-badge" style="background:#EAF3DE;color:#27500A;">Expert 2</div>
+        <div class="expert-name">Random Forest</div>
+        <div class="expert-detail">200 trees, max_depth=8, min_samples_leaf=3. Captures non-linear interactions and feature importance via impurity. Robust to outliers.</div>
+        <div class="expert-metrics">
+          <div class="em-row"><span class="em-label">Strength</span><span class="em-val">Feature importance scores</span></div>
+          <div class="em-row"><span class="em-label">Weakness</span><span class="em-val">Can overfit small datasets</span></div>
+          <div class="em-row"><span class="em-label">Hyperparams</span><span class="em-val">n_est=200, depth=8</span></div>
+        </div>
+      </div>
+      <div class="expert-card">
+        <div class="expert-badge" style="background:#FAEEDA;color:#633806;">Expert 3</div>
+        <div class="expert-name">Gradient Boosting</div>
+        <div class="expert-detail">200 boosting stages, max_depth=4, learning_rate=0.05. Sequential error correction. Often highest accuracy but slowest to train.</div>
+        <div class="expert-metrics">
+          <div class="em-row"><span class="em-label">Strength</span><span class="em-val">Highest predictive accuracy</span></div>
+          <div class="em-row"><span class="em-label">Weakness</span><span class="em-val">Requires careful tuning</span></div>
+          <div class="em-row"><span class="em-label">Hyperparams</span><span class="em-val">lr=0.05, depth=4</span></div>
+        </div>
+      </div>
+    </div>
+    <button class="step-btn" style="margin-top:10px;" onclick="sendPrompt('How do I tune the hyperparameters for the random forest and gradient boosting models in the affordability index pipeline?')">Tuning guide ↗</button>
+  </div>
+
+  <div id="p4" class="panel">
+    <div style="font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; margin-bottom: 12px;">Each expert evaluated on four metrics. Classification metrics apply after binning continuous predictions into 4 affordability tiers.</div>
+    <div class="metric-row">
+      <div class="mc"><div class="mc-l">RMSE</div><div class="mc-v">index pts</div><div class="mc-s">Lower = better. Main regression metric.</div></div>
+      <div class="mc"><div class="mc-l">MAE</div><div class="mc-v">index pts</div><div class="mc-s">Mean absolute error. Robust to outliers.</div></div>
+      <div class="mc"><div class="mc-l">R²</div><div class="mc-v">0–1</div><div class="mc-s">Variance explained. Higher = better.</div></div>
+      <div class="mc"><div class="mc-l">SNR</div><div class="mc-v">dB</div><div class="mc-s">Signal-to-noise: 10·log₁₀(σ²_y / σ²_ε)</div></div>
+    </div>
+    <div style="margin-top: 10px; padding: 10px 12px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); font-size: 12px; color: var(--color-text-secondary); line-height: 1.6;">
+      <strong style="font-weight:500;color:var(--color-text-primary);">Classification layer:</strong> Continuous index predictions binned into 4 tiers (0–25, 25–50, 50–75, 75–100) → confusion matrix + tier accuracy per expert. 5-fold CV RMSE distribution shown as box plots.
+    </div>
+    <div class="tier-legend" style="margin-top: 10px;">
+      <div class="tier-dot"><div class="dot" style="background:#27ae60;"></div>Affordable (75–100)</div>
+      <div class="tier-dot"><div class="dot" style="background:#f39c12;"></div>Moderate (50–75)</div>
+      <div class="tier-dot"><div class="dot" style="background:#e74c3c;"></div>Unaffordable (25–50)</div>
+      <div class="tier-dot"><div class="dot" style="background:#8e44ad;"></div>Severely unaffordable (0–25)</div>
+    </div>
+    <button class="step-btn" style="margin-top:10px;" onclick="sendPrompt('How should I interpret the SNR metric for a regression model predicting housing affordability?')">Interpret SNR ↗</button>
+  </div>
+
+  <div id="p5" class="panel">
+    <div style="font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; margin-bottom: 10px;">8 visualizations saved as PNG files after running the pipeline.</div>
+    <div class="viz-grid">
+      <div class="viz-card" onclick="sendPrompt('Explain what to look for in the correlation heatmap for the affordability index features')">
+        <div class="viz-icon" style="background:#E6F1FB;">
+          <svg width="52" height="36" viewBox="0 0 52 36"><rect x="2" y="2" width="10" height="10" rx="1" fill="#185FA5" opacity=".9"/><rect x="14" y="2" width="10" height="10" rx="1" fill="#378ADD" opacity=".6"/><rect x="26" y="2" width="10" height="10" rx="1" fill="#85B7EB" opacity=".4"/><rect x="38" y="2" width="10" height="10" rx="1" fill="#E6F1FB" opacity=".8" stroke="#B5D4F4" stroke-width="0.5"/><rect x="2" y="14" width="10" height="10" rx="1" fill="#378ADD" opacity=".6"/><rect x="14" y="14" width="10" height="10" rx="1" fill="#185FA5" opacity=".9"/><rect x="26" y="14" width="10" height="10" rx="1" fill="#E6F1FB" opacity=".8" stroke="#B5D4F4" stroke-width="0.5"/><rect x="2" y="26" width="10" height="10" rx="1" fill="#85B7EB" opacity=".5"/><rect x="14" y="26" width="10" height="10" rx="1" fill="#B5D4F4" opacity=".5"/><rect x="26" y="26" width="10" height="10" rx="1" fill="#185FA5" opacity=".9"/><rect x="38" y="26" width="10" height="10" rx="1" fill="#378ADD" opacity=".7"/></svg>
+        </div>
+        <div class="viz-title">viz_01 — correlation heatmap</div>
+        <div class="viz-sub">Feature × feature Pearson r, lower triangle</div>
+      </div>
+      <div class="viz-card" onclick="sendPrompt('Explain what the feature histogram distributions tell us about affordability tiers')">
+        <div class="viz-icon" style="background:#EAF3DE;">
+          <svg width="52" height="36" viewBox="0 0 52 36"><rect x="2" y="22" width="7" height="12" rx="1" fill="#27ae60" opacity=".7"/><rect x="11" y="12" width="7" height="22" rx="1" fill="#27ae60" opacity=".7"/><rect x="20" y="18" width="7" height="16" rx="1" fill="#f39c12" opacity=".7"/><rect x="29" y="8" width="7" height="26" rx="1" fill="#e74c3c" opacity=".7"/><rect x="38" y="16" width="7" height="18" rx="1" fill="#8e44ad" opacity=".7"/></svg>
+        </div>
+        <div class="viz-title">viz_02 — feature histograms</div>
+        <div class="viz-sub">9 features, distributions by tier</div>
+      </div>
+      <div class="viz-card" onclick="sendPrompt('How do I read the PCA biplot for the affordability index?')">
+        <div class="viz-icon" style="background:#FAEEDA;">
+          <svg width="52" height="36" viewBox="0 0 52 36"><circle cx="10" cy="28" r="2" fill="#BA7517" opacity=".6"/><circle cx="18" cy="20" r="2" fill="#BA7517" opacity=".6"/><circle cx="28" cy="14" r="2.5" fill="#EF9F27" opacity=".8"/><circle cx="38" cy="10" r="2" fill="#BA7517" opacity=".6"/><circle cx="46" cy="6" r="2" fill="#EF9F27" opacity=".7"/><line x1="6" y1="32" x2="46" y2="4" stroke="#BA7517" stroke-width="1" opacity=".4"/><line x1="26" y1="18" x2="46" y2="8" stroke="#E24B4A" stroke-width="1.2" marker-end="url(#a)"/><line x1="26" y1="18" x2="12" y2="30" stroke="#185FA5" stroke-width="1.2"/></svg>
+        </div>
+        <div class="viz-title">viz_03 — PCA biplot</div>
+        <div class="viz-sub">PC1 vs PC2 + feature loading arrows</div>
+      </div>
+      <div class="viz-card" onclick="sendPrompt('What RMSE value is acceptable for the affordability index prediction models?')">
+        <div class="viz-icon" style="background:#FCEBEB;">
+          <svg width="52" height="36" viewBox="0 0 52 36"><circle cx="8" cy="28" r="2" fill="#E24B4A" opacity=".5"/><circle cx="16" cy="18" r="2" fill="#E24B4A" opacity=".6"/><circle cx="24" cy="12" r="2" fill="#E24B4A" opacity=".7"/><circle cx="34" cy="8" r="2" fill="#E24B4A" opacity=".6"/><circle cx="44" cy="4" r="2" fill="#E24B4A" opacity=".5"/><line x1="4" y1="32" x2="48" y2="2" stroke="#888780" stroke-width="1" stroke-dasharray="3 2"/></svg>
+        </div>
+        <div class="viz-title">viz_04 — accuracy plots</div>
+        <div class="viz-sub">Actual vs predicted + CV RMSE boxplots</div>
+      </div>
+      <div class="viz-card" onclick="sendPrompt('How do I interpret the confusion matrix for affordability tier classification?')">
+        <div class="viz-icon" style="background:#EEEDFE;">
+          <svg width="52" height="36" viewBox="0 0 52 36"><rect x="2" y="2" width="11" height="11" rx="1" fill="#534AB7" opacity=".9"/><rect x="15" y="2" width="11" height="11" rx="1" fill="#AFA9EC" opacity=".4"/><rect x="28" y="2" width="11" height="11" rx="1" fill="#EEEDFE" opacity=".6" stroke="#CECBF6" stroke-width="0.5"/><rect x="2" y="15" width="11" height="11" rx="1" fill="#AFA9EC" opacity=".4"/><rect x="15" y="15" width="11" height="11" rx="1" fill="#534AB7" opacity=".9"/><rect x="28" y="15" width="11" height="11" rx="1" fill="#AFA9EC" opacity=".3"/><rect x="2" y="28" width="11" height="11" rx="1" fill="#EEEDFE" opacity=".5" stroke="#CECBF6" stroke-width="0.5"/><rect x="15" y="28" width="11" height="11" rx="1" fill="#AFA9EC" opacity=".3"/><rect x="28" y="28" width="11" height="11" rx="1" fill="#534AB7" opacity=".9"/></svg>
+        </div>
+        <div class="viz-title">viz_05 — confusion matrices</div>
+        <div class="viz-sub">Normalized, 4-tier × 3 experts</div>
+      </div>
+      <div class="viz-card" onclick="sendPrompt('Which features matter most for predicting housing affordability in major metros?')">
+        <div class="viz-icon" style="background:#E1F5EE;">
+          <svg width="52" height="36" viewBox="0 0 52 36"><rect x="2" y="6" width="42" height="5" rx="1" fill="#1D9E75" opacity=".9"/><rect x="2" y="14" width="34" height="5" rx="1" fill="#1D9E75" opacity=".7"/><rect x="2" y="22" width="24" height="5" rx="1" fill="#1D9E75" opacity=".5"/><rect x="2" y="30" width="14" height="5" rx="1" fill="#1D9E75" opacity=".3"/></svg>
+        </div>
+        <div class="viz-title">viz_06 — feature importance</div>
+        <div class="viz-sub">Tree importance + Ridge |coefficients|</div>
+      </div>
+      <div class="viz-card" onclick="sendPrompt('Compare RMSE MAE R2 and SNR across the three expert models')">
+        <div class="viz-icon" style="background:#FAECE7;">
+          <svg width="52" height="36" viewBox="0 0 52 36"><rect x="4" y="14" width="12" height="20" rx="1" fill="#2980b9" opacity=".8"/><rect x="20" y="8" width="12" height="26" rx="1" fill="#27ae60" opacity=".8"/><rect x="36" y="10" width="12" height="24" rx="1" fill="#e67e22" opacity=".8"/></svg>
+        </div>
+        <div class="viz-title">viz_07 — metrics summary</div>
+        <div class="viz-sub">RMSE, MAE, R², SNR bar comparison</div>
+      </div>
+      <div class="viz-card" onclick="sendPrompt('What are the top 5 most affordable large metro areas in the United States?')">
+        <div class="viz-icon" style="background:#EAF3DE;">
+          <svg width="52" height="36" viewBox="0 0 52 36"><rect x="2" y="4" width="46" height="5" rx="1" fill="#27ae60" opacity=".9"/><rect x="2" y="12" width="40" height="5" rx="1" fill="#27ae60" opacity=".7"/><rect x="2" y="20" width="22" height="5" rx="1" fill="#e74c3c" opacity=".6"/><rect x="2" y="28" width="12" height="5" rx="1" fill="#8e44ad" opacity=".7"/></svg>
+        </div>
+        <div class="viz-title">viz_08 — affordability ranking</div>
+        <div class="viz-sub">Top 20 + bottom 20 metros, by tier</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="p6" class="panel">
+    <div style="font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; margin-bottom: 12px;">Weighted ensemble combines all three experts. Weights proportional to each model's training R² — better models get more vote.</div>
+    <div class="metric-row" style="margin-bottom: 14px;">
+      <div class="mc"><div class="mc-l">Ridge weight</div><div class="mc-v" style="font-size:16px;">~0.28</div><div class="mc-s">Lowest R² typically</div></div>
+      <div class="mc"><div class="mc-l">Random Forest</div><div class="mc-v" style="font-size:16px;">~0.36</div><div class="mc-s">Mid weight</div></div>
+      <div class="mc"><div class="mc-l">Grad. Boosting</div><div class="mc-v" style="font-size:16px;">~0.36</div><div class="mc-s">Highest weight typically</div></div>
+    </div>
+    <div style="padding: 10px 14px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); font-size: 12px; color: var(--color-text-secondary); line-height: 1.7;">
+      <div style="font-weight:500; color: var(--color-text-primary); margin-bottom: 4px;">Ensemble formula</div>
+      <code style="font-family: var(--font-mono); font-size: 12px; color: var(--color-text-primary);">ŷ_ens = (w₁·ŷ_ridge + w₂·ŷ_rf + w₃·ŷ_gbm) / (w₁+w₂+w₃)</code>
+      <div style="margin-top: 8px;">Output: continuous index 0–100 + 4-tier classification label per metro. Saved to <code style="font-size: 11px; background: var(--color-background-primary); padding: 1px 4px; border-radius:3px;">affordability_index_results.csv</code></div>
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
+      <button class="step-btn" onclick="sendPrompt('How do I extend the affordability index pipeline to use stacking instead of a simple weighted ensemble?')">Extend to stacking ↗</button>
+      <button class="step-btn" onclick="sendPrompt('How do I add demographic filtering to the affordability index so it shows results for a specific race and income bracket?')">Add demographic filters ↗</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function show(idx, btn) {
+  document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+  document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
