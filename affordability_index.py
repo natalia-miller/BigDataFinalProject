@@ -22,6 +22,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import seaborn as sns
+import re
 
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.decomposition import PCA
@@ -67,108 +68,188 @@ RAW_GROUPS = {
     "B23025": "employment",
 }
 
+
+def make_name_mapper(group: str, vintage: int = VINTAGE) -> callable:
+    group_prefix = RAW_GROUPS[group]   # e.g. "rent_burden", "employment"
+
+    def _mapper(variable: str) -> str:
+        if not variable.startswith(group):
+            return variable  # STATE, COUNTY, NAME — pass through unchanged
+
+        try:
+            result = ced.variables.search(ACS1, vintage, group_name=group, name=variable)
+            if result.empty:
+                return variable
+
+            label = result.iloc[0]["LABEL"]
+
+            # Parse all non-empty segments after "Estimate!!"
+            # e.g. "Estimate!!Total:!!30 to 34 percent!!" → ["Total", "30 to 34 percent"]
+            segments = [
+                s.split('(')[0].strip().rstrip(":")
+                for s in label.split("!")
+                if s.strip() and s.strip().lower() not in ("estimate", "")
+            ]
+
+            if not segments:
+                return variable
+
+            # Drop the first segment if it's just "Total" and there are more
+            # specific segments following it — avoids "rent_burden_total_30_to_34_percent"
+            if len(segments) > 1 and segments[0].lower() == "total":
+                segments = segments[1:]
+
+            # Slugify: lowercase, spaces → underscores, strip special chars
+            slug = "_".join(
+                re.sub(r"[^a-z0-9]+", "_", s.lower()).strip("_")
+                for s in segments
+            )
+
+            return f"{group_prefix}__{slug}"   # e.g. "rent_burden__30_to_34_percent"
+
+        except Exception:
+            return variable  # safe fallback to raw code
+
+    return _mapper
+
+
 # Specific variable columns we want from each group
 TARGET_VARS = {
     # Rent burden: % paying ≥30% income on rent (B25070_007E–B25070_011E sum / B25070_001E)
-    "B25070_001E": "rent_burden_total",
-    "B25070_007E": "rent_30_34pct",
-    "B25070_008E": "rent_35_39pct",
-    "B25070_009E": "rent_40_49pct",
-    "B25070_010E": "rent_50plus_pct",
+    "B25070_001E": "rent_burden__total",
+    "B25070_007E": "rent_burden__30_to_34_percent",
+    "B25070_008E": "rent_burden__35_0_to_39_9_percent",
+    "B25070_009E": "rent_burden__40_0_to_49_9_percent",
+    "B25070_010E": "rent_burden__50_percent_or_more",
     # Mortgage burden
-    "B25091_001E": "mortgage_total",
-    "B25091_008E": "mortgage_30_34pct",
-    "B25091_009E": "mortgage_35_39pct",
-    "B25091_010E": "mortgage_40_49pct",
-    "B25091_011E": "mortgage_50plus_pct",
+    "B25091_001E": "mortgage_burden__total",
+    "B25091_008E": "mortgage_burden__housing_units_with_a_mortgage_30_0_to_34_9_percent",
+    "B25091_009E": "mortgage_burden__housing_units_with_a_mortgage_35_0_to_39_9_percent",
+    "B25091_010E": "mortgage_burden__housing_units_with_a_mortgage_40_0_to_49_9_percent",
+    "B25091_011E": "mortgage_burden__housing_units_with_a_mortgage_50_0_percent_or_more",
     # Income
-    "B19013_001E": "median_hh_income",
+    "B19013_001E": "median_hh_income__median_household_income",
     # Rent & home value
-    "B25064_001E": "median_gross_rent",
-    "B25077_001E": "median_home_value",
+    "B25064_001E": "median_gross_rent__median_gross_rent",
+    "B25077_001E": "median_home_value__median_value_dollars",
     # Poverty ratio: pct above 2× poverty line
-    "B17002_001E": "poverty_total",
-    "B17002_012E": "above_2x_poverty",
+    "B17002_001E": "poverty_ratio__total",
+    "B17002_012E": "poverty_ratio__4_00_to_4_99",
     # Employment: unemployment rate proxy
-    "B23025_003E": "employed",
-    "B23025_005E": "unemployed",
-    "B23025_002E": "labor_force",
+    "B23025_003E": "employment__employed",
+    "B23025_005E": "employment__unemployed",
+    "B23025_002E": "employment__in_labor_force",
 }
 
 
 def pull_acs_features(vintage: int = VINTAGE) -> pd.DataFrame:
-    """Pull all required ACS1 groups and merge on STATE + COUNTY."""
+    """
+    Pull all required ACS1 groups, apply per-group name_mapper, and merge.
+
+    Each group gets its own mapper via make_name_mapper() so the closure
+    captures the correct group code. Duplicate non-key columns that appear
+    in multiple groups (e.g. NAME) are suffixed and de-duped on merge.
+    """
+    from functools import reduce
+
     print("── Pulling ACS1 data ──────────────────────────────────────────")
     frames = []
-    for group in RAW_GROUPS:
-        print(f"  {group} ({RAW_GROUPS[group]})...")
+
+    for group, label in RAW_GROUPS.items():
+        print(f"  {group} ({label})...")
         try:
             df = ced.download(ACS1, vintage, group=group, state="*", county="*")
+
+            # Apply the group-scoped mapper; pass-through columns keep original names
+            mapper = make_name_mapper(group, vintage)
+            df = df.rename(columns=mapper)
+
             frames.append(df)
+            print(f"    → {len(df)} rows, {len(df.columns)} columns")
         except Exception as e:
             print(f"    Warning: {group} failed — {e}")
 
     if not frames:
         raise RuntimeError("No data pulled. Check censusdis installation.")
 
-    # Merge all frames on STATE + COUNTY + NAME
-    merged = frames[0]
-    for df in frames[1:]:
-        cols = [c for c in df.columns if c not in merged.columns or c in ["STATE","COUNTY","NAME"]]
-        merged = merged.merge(df[cols + ["STATE","COUNTY"]], on=["STATE","COUNTY"], how="inner")
+    # Merge all frames on STATE + COUNTY; use outer so no geography is dropped
+    # NAME may appear in multiple frames — keep the first occurrence via suffixes
+    KEY_COLS = ["STATE", "COUNTY"]
 
-    print(f"  → {len(merged)} geographies pulled")
+    def _merge(left: pd.DataFrame, right: pd.DataFrame) -> pd.DataFrame:
+        # Drop NAME from right if left already has it to avoid _x/_y suffixes
+        right_cols = [c for c in right.columns if c not in left.columns or c in KEY_COLS]
+        return pd.merge(
+            left,
+            right[right_cols],
+            on=KEY_COLS,
+            how="outer",
+        )
+
+    merged = reduce(_merge, frames)
+
+    # Restore NAME from the first frame if it was lost
+    if "NAME" not in merged.columns and "NAME" in frames[0].columns:
+        merged = merged.merge(
+            frames[0][KEY_COLS + ["NAME"]], on=KEY_COLS, how="left"
+        )
+
+    print(f"\n  → {len(merged)} geographies, {len(merged.columns)} total columns")
     return merged
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # STEP 2 — FEATURE ENGINEERING
 # ══════════════════════════════════════════════════════════════════════════════
-
 def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Derive clean affordability features from raw ACS counts.
-    All rates are 0–100 (percentage points).
-    """
-    print("\n── Engineering features ───────────────────────────────────────")
     out = df[["NAME", "STATE", "COUNTY"]].copy()
 
     def safe_div(num, denom, scale=100):
         return np.where(denom > 0, num / denom * scale, np.nan)
 
-    # ── Rent burden: % of renters paying ≥30% income on rent
+    # Rent burden: % of renters paying ≥30% income on rent
     rent_burdened = (
-        df.get("B25070_007E", 0) + df.get("B25070_008E", 0) +
-        df.get("B25070_009E", 0) + df.get("B25070_010E", 0)
+        df.get("rent_burden__30_0_to_34_9_percent", 0) +
+        df.get("rent_burden__35_0_to_39_9_percent", 0) +
+        df.get("rent_burden__40_0_to_49_9_percent", 0) +
+        df.get("rent_burden__50_0_percent_or_more", 0)
     )
-    out["rent_burden_pct"]     = safe_div(rent_burdened, df.get("B25070_001E", np.nan))
+    out["rent_burden_pct"] = safe_div(rent_burdened, df.get("rent_burden__total", np.nan))
 
-    # ── Mortgage burden: % of owners paying ≥30% income on mortgage
+    # Mortgage burden: % of owners with mortgage paying ≥30%
     mtg_burdened = (
-        df.get("B25091_008E", 0) + df.get("B25091_009E", 0) +
-        df.get("B25091_010E", 0) + df.get("B25091_011E", 0)
+        df.get("mortgage_burden__housing_units_with_a_mortgage_30_0_to_34_9_percent", 0) +
+        df.get("mortgage_burden__housing_units_with_a_mortgage_35_0_to_39_9_percent", 0) +
+        df.get("mortgage_burden__housing_units_with_a_mortgage_40_0_to_49_9_percent", 0) +
+        df.get("mortgage_burden__housing_units_with_a_mortgage_50_0_percent_or_more", 0)
     )
-    out["mortgage_burden_pct"] = safe_div(mtg_burdened, df.get("B25091_001E", np.nan))
+    out["mortgage_burden_pct"] = safe_div(
+        mtg_burdened,
+        df.get("mortgage_burden__housing_units_with_a_mortgage", np.nan)  # use with-mortgage subtotal as denominator
+    )
 
-    # ── Income & prices
-    out["median_hh_income"]    = pd.to_numeric(df.get("B19013_001E"), errors="coerce")
-    out["median_gross_rent"]   = pd.to_numeric(df.get("B25064_001E"), errors="coerce")
-    out["median_home_value"]   = pd.to_numeric(df.get("B25077_001E"), errors="coerce")
+    # Income & prices
+    out["median_hh_income"]  = pd.to_numeric(df.get("median_hh_income__median_household_income_in_the_past_12_months"), errors="coerce")
+    out["median_gross_rent"] = pd.to_numeric(df.get("median_gross_rent__median_gross_rent"), errors="coerce")
+    out["median_home_value"] = pd.to_numeric(df.get("median_home_value__median_value"), errors="coerce")  # fixed
 
-    # ── Price-to-income ratio (home value / annual HH income)
+    # Derived ratios
     out["home_value_to_income"] = out["median_home_value"] / out["median_hh_income"].replace(0, np.nan)
+    out["rent_to_income"]       = (out["median_gross_rent"] * 12) / out["median_hh_income"].replace(0, np.nan)
 
-    # ── Rent-to-income ratio (annualized rent / annual HH income)
-    out["rent_to_income"]      = (out["median_gross_rent"] * 12) / out["median_hh_income"].replace(0, np.nan)
-
-    # ── % of population above 2× poverty line (prosperity proxy)
-    out["pct_above_2x_poverty"] = safe_div(
-        df.get("B17002_012E", 0), df.get("B17002_001E", np.nan)
+    # % population above 2× poverty line — sum all brackets at or above 2.00
+    above_2x = (
+        df.get("poverty_ratio__2_00_to_2_99", 0) +
+        df.get("poverty_ratio__3_00_to_3_99", 0) +
+        df.get("poverty_ratio__4_00_to_4_99", 0) +
+        df.get("poverty_ratio__5_00_and_over", 0)
     )
+    out["pct_above_2x_poverty"] = safe_div(above_2x, df.get("poverty_ratio__total", np.nan))
 
-    # ── Unemployment rate
-    out["unemployment_rate"]   = safe_div(
-        df.get("B23025_005E", 0), df.get("B23025_002E", np.nan)
+    # Unemployment rate: civilian unemployed / total in labor force
+    out["unemployment_rate"] = safe_div(
+        df.get("employment__in_labor_force_civilian_labor_force_unemployed", 0),  # fixed
+        df.get("employment__in_labor_force", np.nan)
     )
 
     out = out.dropna(subset=[
@@ -186,7 +267,6 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
 
     print(f"  → {len(out)} geographies after feature engineering")
     return out.reset_index(drop=True)
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # STEP 3 — COMPOSITE AFFORDABILITY INDEX (ground truth label)
